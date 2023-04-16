@@ -8,7 +8,11 @@
   </head>
   <body>
     <h1>Chat App</h1>
-    <button id="increment">+1</button>
+    <form id="message-form">
+      <input name="message" placeholder="Write something..." />
+      <button>Send</button>
+    </form>
+    <button id="send-location">Send location</button>
     <!-- // this is the client side version of the librabry -->
     <!-- with this logic the client side js code will have sccess to sockkets  -->
     <script src="/socket.io/socket.io.js"></script>
