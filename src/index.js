@@ -2,6 +2,7 @@ const path = require("path");
 const http = require("http");
 const express = require("express");
 const socketio = require("socket.io");
+const Filter = require("bad-words");
 
 const app = express();
 const server = http.createServer(app);
@@ -15,34 +16,41 @@ const publicDirectoryPath = path.join(__dirname, "../public");
 app.use(express.static(publicDirectoryPath));
 
 // 'socket'object holds the information about the new connection
+
+// socket.on(event, function, arg)
+
 io.on("connection", (socket) => {
   console.log("Socket connected");
 
-  // "welcome" to perticular user
-  socket.emit("message", "Welcome");
+  socket.emit("message", "Welcome"); // --> "welcome" to perticular user
+  socket.broadcast.emit("message", "A new user has joined!"); // --> emit to everybody, but that perticular user
 
-  // emit to everybody but that perticular user
-  socket.broadcast.emit("message", "A new user has joined!");
-  socket.on("sendMessage", (message) => {
-    // send it to everyone
-    io.emit("message", message);
+  socket.on("sendMessage", (message, callback) => {
+    const filter = new Filter(message);
+
+    if (filter.isProfane(message)) {
+      return callback("Profanity is not allowed");
+    }
+    io.emit("message", message); // --> send it to everyone
+    callback();
+  });
+
+  socket.on("sendLocation", (coords, callback) => {
+    io.emit(
+      "message",
+      `https://google.com/maps?q=${coords.lat},${coords.long}`
+    );
+    callback();
   });
 
   socket.on("disconnect", () => {
     io.emit("message", "A user has left!");
   });
 
-  socket.on("sendLocation", (coords) => {
-    io.emit(
-      "message",
-      `https://google.com/maps?q=${coords.lat},${coords.long}`
-    );
-  });
-
   //  server (emit) -> client recieved - countUppdated
   // client (emit) -> server recieved - increment
 
-  // socket.emit("countUpdated", count);
+  // socket.emit("countUpdated", count); --> put it inside "io.on" to work"
 
   // socket.on("increment", () => {
   //   count++;

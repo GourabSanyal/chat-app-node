@@ -1,28 +1,72 @@
 const socket = io();
 
+// Elements
+
+const $messageForm = document.querySelector("#message-form");
+const $messageFormInput = $messageForm.querySelector("input");
+const $messageFormButtons = $messageForm.querySelector("button");
+
+const $sendLocationButton = document.querySelector("#send-location");
+
+// server (emit) -> client ( receive) -> acknowledgement --> server
+
+// client (emit) -> server ( receive ) -> acknowledgement --> server
+
+// socket.on("name fo the event", function, arg)
+// 2nd arg in the server is the 1st arg for the callback func in client
+
 socket.on("message", (message) => {
   console.log(message);
 });
 
-document.querySelector("#message-form").addEventListener("submit", (e) => {
+$messageForm.addEventListener("submit", (e) => {
   e.preventDefault();
+
+  // --- disable the form ---
+
+  $messageFormButtons.setAttribute("disabled", "disabled");
 
   const message = e.target.elements.message.value;
   // also can be done by "document.querySelector("input").value;"
-  socket.emit("sendMessage", message);
+
+  // last function is for event acknowledgement
+  socket.emit("sendMessage", message, (error) => {
+    // --- enable the form ---
+    $messageFormButtons.removeAttribute("disabled");
+    $messageFormInput.value = "";
+    $messageFormInput.focus();
+    // profanity is handled "error" <-- acknowledgement
+    if (error) {
+      return console.log(error);
+    }
+    console.log("message delivered - client");
+  });
 });
 
-document.querySelector("#send-location").addEventListener("click", (e) => {
+$sendLocationButton.addEventListener("click", (e) => {
   e.preventDefault();
+
   if (!navigator.geolocation) {
     return alert("Geo location is not supported by your browser");
   }
 
+  // disable buttons
+  $sendLocationButton.setAttribute("disabled", "disabled");
+
   navigator.geolocation.getCurrentPosition((position) => {
-    socket.emit("sendLocation", {
-      lat: position.coords.latitude,
-      long: position.coords.longitude,
-    });
+    socket.emit(
+      "sendLocation",
+      {
+        lat: position.coords.latitude,
+        long: position.coords.longitude,
+      },
+      () => {
+        // this is executed after the "callbacl()" is called from server
+        $sendLocationButton.removeAttribute("disabled");
+        console.log("location shared - client");
+        // enable buttons
+      }
+    );
   });
 });
 
