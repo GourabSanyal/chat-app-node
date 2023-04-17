@@ -3,6 +3,7 @@ const http = require("http");
 const express = require("express");
 const socketio = require("socket.io");
 const Filter = require("bad-words");
+const { generateMessage } = require("./utils/messages");
 
 const app = express();
 const server = http.createServer(app);
@@ -22,8 +23,8 @@ app.use(express.static(publicDirectoryPath));
 io.on("connection", (socket) => {
   console.log("Socket connected");
 
-  socket.emit("message", "Welcome"); // --> "welcome" to perticular user
-  socket.broadcast.emit("message", "A new user has joined!"); // --> emit to everybody, but that perticular user
+  socket.emit("message", generateMessage("Welcome!")); // --> "welcome" to perticular user
+  socket.broadcast.emit("message", generateMessage("A new user has joined!")); // --> emit to everybody, but that perticular user
 
   socket.on("sendMessage", (message, callback) => {
     const filter = new Filter(message);
@@ -31,20 +32,20 @@ io.on("connection", (socket) => {
     if (filter.isProfane(message)) {
       return callback("Profanity is not allowed");
     }
-    io.emit("message", message); // --> send it to everyone
+    io.emit("message", generateMessage(message)); // --> send it to everyone
     callback();
   });
 
   socket.on("sendLocation", (coords, callback) => {
     io.emit(
-      "message",
+      "locationMessage",
       `https://google.com/maps?q=${coords.lat},${coords.long}`
     );
     callback();
   });
 
   socket.on("disconnect", () => {
-    io.emit("message", "A user has left!");
+    io.emit("message", generateMessage("A user has left!"));
   });
 
   //  server (emit) -> client recieved - countUppdated

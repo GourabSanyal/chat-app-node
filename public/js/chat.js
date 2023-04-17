@@ -1,22 +1,43 @@
 const socket = io();
+// const Mustache = Mustache();
 
 // Elements
 
 const $messageForm = document.querySelector("#message-form");
 const $messageFormInput = $messageForm.querySelector("input");
 const $messageFormButtons = $messageForm.querySelector("button");
-
 const $sendLocationButton = document.querySelector("#send-location");
+const $messages = document.querySelector("#messages");
+// Templates
+
+const messageTemplate = document.querySelector("#message-template").innerHTML;
+const locationMessageTemplate = document.querySelector(
+  "#location-message-template"
+).innerHTML;
 
 // server (emit) -> client ( receive) -> acknowledgement --> server
 
 // client (emit) -> server ( receive ) -> acknowledgement --> server
 
-// socket.on("name fo the event", function, arg)
+// socket.on("name of the event", function, arg)
 // 2nd arg in the server is the 1st arg for the callback func in client
 
 socket.on("message", (message) => {
   console.log(message);
+
+  const html = Mustache.render(messageTemplate, {
+    message: message.text,
+    createdAt: message.createdAt,
+  });
+  $messages.insertAdjacentHTML("beforeend", html);
+});
+
+socket.on("locationMessage", (url) => {
+  console.log(url);
+  const html = Mustache.render(locationMessageTemplate, {
+    url: url,
+  });
+  $messages.insertAdjacentHTML("beforeend", html);
 });
 
 $messageForm.addEventListener("submit", (e) => {
@@ -41,6 +62,8 @@ $messageForm.addEventListener("submit", (e) => {
     }
     console.log("message delivered - client");
   });
+
+  socket.emit("locationMessage", (url) => {});
 });
 
 $sendLocationButton.addEventListener("click", (e) => {
