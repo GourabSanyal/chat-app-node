@@ -8,12 +8,20 @@ const $messageFormInput = $messageForm.querySelector("input");
 const $messageFormButtons = $messageForm.querySelector("button");
 const $sendLocationButton = document.querySelector("#send-location");
 const $messages = document.querySelector("#messages");
+
 // Templates
 
 const messageTemplate = document.querySelector("#message-template").innerHTML;
 const locationMessageTemplate = document.querySelector(
   "#location-message-template"
 ).innerHTML;
+
+const { username, room } = Object.fromEntries(
+  new URLSearchParams(location.search)
+);
+
+// Get the query string from the URL
+// const queryString = window.location.search;
 
 // server (emit) -> client ( receive) -> acknowledgement --> server
 
@@ -93,6 +101,8 @@ $sendLocationButton.addEventListener("click", (e) => {
     );
   });
 });
+
+socket.emit("join", { username, room });
 
 // socket.on("countUpdated", (count) => {
 //   console.log("Count has been updated ", count);

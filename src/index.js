@@ -26,8 +26,14 @@ app.use(express.static(publicDirectoryPath));
 io.on("connection", (socket) => {
   console.log("Socket connected");
 
-  socket.emit("message", generateMessage("Welcome!")); // --> "welcome" to perticular user
-  socket.broadcast.emit("message", generateMessage("A new user has joined!")); // --> emit to everybody, but that perticular user
+  socket.on("join", ({ username, room }) => {
+    socket.join(room);
+
+    socket.emit("message", generateMessage("Welcome!")); // --> "welcome" to perticular user
+    socket.broadcast
+      .to(room)
+      .emit("message", generateMessage(`${username} has joined`)); // --> emit to everybody, but that perticular user
+  });
 
   socket.on("sendMessage", (message, callback) => {
     const filter = new Filter(message);
@@ -35,7 +41,7 @@ io.on("connection", (socket) => {
     if (filter.isProfane(message)) {
       return callback("Profanity is not allowed");
     }
-    io.emit("message", generateMessage(message)); // --> send it to everyone
+    io.to("ab").emit("message", generateMessage(message)); // --> send it to everyone
     callback();
   });
 
