@@ -31,6 +31,29 @@ const { username, room } = Object.fromEntries(
 // socket.on("name of the event", function, arg)
 // 2nd arg in the server is the 1st arg for the callback func in client
 
+const autoScroll = () => {
+  // new message element
+  const $newMessage = $messages.lastElementChild;
+
+  // height of the new message
+  const newMessageStyles = getComputedStyle($newMessage);
+  const newMessageMargin = parseInt(newMessageStyles.marginBottom);
+  const newMessageHeight = $newMessage.offsetHeight + newMessageMargin;
+
+  // visible height
+  const visibleHeight = $messages.offsetHeight;
+
+  // height of messages container
+  const containertHeight = $messages.scrollHeight;
+
+  // how fat have I scrolled
+  const scrollOffSet = $messages.scrollTop + visibleHeight;
+
+  if (containertHeight - newMessageHeight <= scrollOffSet) {
+    $messages.scrollTop = $messages.scrollHeight;
+  }
+};
+
 socket.on("message", (message) => {
   console.log(message);
 
@@ -40,6 +63,7 @@ socket.on("message", (message) => {
     createdAt: moment(message.createdAt).format("h:mm a"),
   });
   $messages.insertAdjacentHTML("beforeend", html);
+  autoScroll();
 });
 
 socket.on("locationMessage", (message) => {
@@ -50,6 +74,7 @@ socket.on("locationMessage", (message) => {
     createdAt: moment(message.createdAt).format("h:mm a"),
   });
   $messages.insertAdjacentHTML("beforeend", html);
+  autoScroll();
 });
 
 socket.on("roomData", ({ room, users }) => {
