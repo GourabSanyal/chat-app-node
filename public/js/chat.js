@@ -102,7 +102,12 @@ $sendLocationButton.addEventListener("click", (e) => {
   });
 });
 
-socket.emit("join", { username, room });
+socket.emit("join", { username, room }, (error) => {
+  if (error) {
+    alert(error);
+    location.href = "/";
+  }
+});
 
 // socket.on("countUpdated", (count) => {
 //   console.log("Count has been updated ", count);

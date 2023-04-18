@@ -8,6 +8,13 @@ const {
   generateLocationMessage,
 } = require("./utils/messages");
 
+const {
+  addUser,
+  removeUser,
+  getUser,
+  getUsersInRoom,
+} = require("./utils/users");
+
 const app = express();
 const server = http.createServer(app);
 // socket expexts to be called raw http server
@@ -20,19 +27,26 @@ const publicDirectoryPath = path.join(__dirname, "../public");
 app.use(express.static(publicDirectoryPath));
 
 // 'socket'object holds the information about the new connection
-
 // socket.on(event, function, arg)
 
 io.on("connection", (socket) => {
   console.log("Socket connected");
 
-  socket.on("join", ({ username, room }) => {
-    socket.join(room);
+  // options --> { username, room }
+  socket.on("join", (options, callback) => {
+    const { error, user } = addUser({ id: socket.id, ...options });
+
+    if (error) {
+      return callback(error);
+    }
+
+    socket.join(user.room);
 
     socket.emit("message", generateMessage("Welcome!")); // --> "welcome" to perticular user
     socket.broadcast
-      .to(room)
-      .emit("message", generateMessage(`${username} has joined`)); // --> emit to everybody, but that perticular user
+      .to(user.room)
+      .emit("message", generateMessage(`${user.username} has joined`)); // --> emit to everybody, but that perticular user
+    callback();
   });
 
   socket.on("sendMessage", (message, callback) => {
@@ -56,7 +70,14 @@ io.on("connection", (socket) => {
   });
 
   socket.on("disconnect", () => {
-    io.emit("message", generateMessage("A user has left!"));
+    const user = removeUser(socket.id);
+
+    if (user) {
+      io.to(user.room).emit(
+        "message",
+        generateMessage(`${user.username} has left!`)
+      );
+    }
   });
 
   //  server (emit) -> client recieved - countUppdated
