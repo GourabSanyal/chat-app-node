@@ -3,6 +3,8 @@ const http = require("http");
 const express = require("express");
 const socketio = require("socket.io");
 const Filter = require("bad-words");
+const cors = require("cors");
+const FRONTEND_URL = process.env.FRONTEND_URL;
 const {
   generateMessage,
   generateLocationMessage,
@@ -19,7 +21,12 @@ const app = express();
 const server = http.createServer(app);
 // socket expexts to be called raw http server
 // this logic - server supports the web sockets
-const io = socketio(server);
+const io = socketio(server, {
+  cors: {
+    origin: ["https://your-frontend-domain.netlify.app"],
+    methods: ["GET", "POST"]
+  }
+});
 
 const port = process.env.PORT || 3000;
 const publicDirectoryPath = path.join(__dirname, "../public");
