@@ -1,5 +1,0 @@
-name = "chat-app"
-type = "javascript"
-
-[build]
-command = "npm install && npm run build"
