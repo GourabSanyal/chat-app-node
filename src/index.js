@@ -4,8 +4,6 @@ const express = require("express");
 const socketio = require("socket.io");
 const Filter = require("bad-words");
 require('dotenv').config();
-// const FRONTEND_URL = process.env.FRONTEND_URL;
-// const BACKEND_URL = process.env.BACKEND_URL;
 const cors = require('cors')
 const hbs = require('hbs');
 const {
@@ -52,8 +50,8 @@ const io = socketio(server,{
 
 const port = process.env.PORT || 3000;
 
-console.log("BACKEND_URL fromm index js:", BACKEND_URL);
-console.log("FRONTEND_URL fromm index js:", FRONTEND_URL);
+console.log("Environment:", isDevelopment ? 'Development' : 'Production');
+
 
 app.get('/env-config.js', (req, res) => {
   console.log("env config hit");

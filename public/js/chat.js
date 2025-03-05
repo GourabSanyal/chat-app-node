@@ -6,8 +6,8 @@ const FRONTEND_URL = window.FRONTEND_URL;
 const ENV = window.ENV;
 
 console.log(`Running in ${ENV} environment`);
-console.log("Backend URL:", BACKEND_URL);
-console.log("Frontend URL:", FRONTEND_URL);
+// console.log("Backend URL:", BACKEND_URL);
+// console.log("Frontend URL:", FRONTEND_URL);
 
 // console.log("BACKEND_URL from chat js:", BACKEND_URL); // Check if this is undefined
 // console.log("FRONTEND_URL fromm index js:", FRONTEND_URL);
