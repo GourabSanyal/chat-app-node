@@ -3,8 +3,11 @@ const http = require("http");
 const express = require("express");
 const socketio = require("socket.io");
 const Filter = require("bad-words");
-const cors = require("cors");
+require('dotenv').config();
 const FRONTEND_URL = process.env.FRONTEND_URL;
+const BACKEND_URL = process.env.BACKEND_URL;
+const cors = require('cors')
+const hbs = require('hbs');
 const {
   generateMessage,
   generateLocationMessage,
@@ -21,17 +24,27 @@ const app = express();
 const server = http.createServer(app);
 // socket expexts to be called raw http server
 // this logic - server supports the web sockets
-const io = socketio(server, {
-  cors: {
-    origin: ["https://your-frontend-domain.netlify.app"],
+const publicDirectoryPath = path.join(__dirname, "../public");
+app.use(express.static(publicDirectoryPath));
+app.use(cors());
+
+const io = socketio(server,{
+  cors : {
+    origin: [`${FRONTEND_URL}`],
     methods: ["GET", "POST"]
   }
 });
 
 const port = process.env.PORT || 3000;
-const publicDirectoryPath = path.join(__dirname, "../public");
 
-app.use(express.static(publicDirectoryPath));
+console.log("BACKEND_URL fromm index js:", BACKEND_URL);
+console.log("FRONTEND_URL fromm index js:", FRONTEND_URL);
+
+app.get('/env-config.js', (req, res) => {
+  console.log("env config hit");
+  res.type('application/javascript');
+  res.send(`window.BACKEND_URL = "${BACKEND_URL}";`);
+});
 
 // 'socket'object holds the information about the new connection
 // socket.on(event, function, arg)

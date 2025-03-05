@@ -1,4 +1,8 @@
-const BACKEND_URL = process.env.BACKEDN_URL;
+const BACKEND_URL = window.BACKEND_URL;
+const FRONTEND_URL = window.FRONTEND_URL;
+
+console.log("BACKEND_URL from chat js:", BACKEND_URL); // Check if this is undefined
+console.log("FRONTEND_URL fromm index js:", FRONTEND_URL);
 
 const socket = io(`${BACKEND_URL}`,{
   transports: ['websocket', 'polling']
