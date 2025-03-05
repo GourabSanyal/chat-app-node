@@ -1,8 +1,16 @@
+// const BACKEND_URL = window.BACKEND_URL;
+// const FRONTEND_URL = window.FRONTEND_URL;
+
 const BACKEND_URL = window.BACKEND_URL;
 const FRONTEND_URL = window.FRONTEND_URL;
+const ENV = window.ENV;
 
-console.log("BACKEND_URL from chat js:", BACKEND_URL); // Check if this is undefined
-console.log("FRONTEND_URL fromm index js:", FRONTEND_URL);
+console.log(`Running in ${ENV} environment`);
+console.log("Backend URL:", BACKEND_URL);
+console.log("Frontend URL:", FRONTEND_URL);
+
+// console.log("BACKEND_URL from chat js:", BACKEND_URL); // Check if this is undefined
+// console.log("FRONTEND_URL fromm index js:", FRONTEND_URL);
 
 const socket = io(`${BACKEND_URL}`,{
   transports: ['websocket', 'polling']

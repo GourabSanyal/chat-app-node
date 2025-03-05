@@ -4,8 +4,8 @@ const express = require("express");
 const socketio = require("socket.io");
 const Filter = require("bad-words");
 require('dotenv').config();
-const FRONTEND_URL = process.env.FRONTEND_URL;
-const BACKEND_URL = process.env.BACKEND_URL;
+// const FRONTEND_URL = process.env.FRONTEND_URL;
+// const BACKEND_URL = process.env.BACKEND_URL;
 const cors = require('cors')
 const hbs = require('hbs');
 const {
@@ -20,17 +20,32 @@ const {
   getUsersInRoom,
 } = require("./utils/users");
 
+// dev or prod ?
+const isDevelopment = process.env.NODE_ENV !== 'production';
+const BACKEND_URL = isDevelopment 
+  ? process.env.LOCAL_BACKEND_URL 
+  : process.env.PROD_BACKEND_URL;
+const FRONTEND_URL = isDevelopment 
+  ? process.env.LOCAL_FRONTEND_URL 
+  : process.env.PROD_FRONTEND_URL;
+
 const app = express();
 const server = http.createServer(app);
+
 // socket expexts to be called raw http server
 // this logic - server supports the web sockets
 const publicDirectoryPath = path.join(__dirname, "../public");
 app.use(express.static(publicDirectoryPath));
 app.use(cors());
 
+
+
 const io = socketio(server,{
   cors : {
-    origin: [`${FRONTEND_URL}`],
+    origin: [
+      process.env.LOCAL_FRONTEND_URL,
+      process.env.PROD_FRONTEND_URL
+    ].filter(Boolean),
     methods: ["GET", "POST"]
   }
 });
@@ -43,7 +58,12 @@ console.log("FRONTEND_URL fromm index js:", FRONTEND_URL);
 app.get('/env-config.js', (req, res) => {
   console.log("env config hit");
   res.type('application/javascript');
-  res.send(`window.BACKEND_URL = "${BACKEND_URL}";`);
+  res.send(`
+    window.BACKEND_URL = "${BACKEND_URL}";
+    window.FRONTEND_URL = "${FRONTEND_URL}";
+    window.ENV = "${isDevelopment ? 'development' : 'production'}";
+  `);
+  // res.send(`window.BACKEND_URL = "${BACKEND_URL}";`);
 });
 
 // 'socket'object holds the information about the new connection
