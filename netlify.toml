@@ -1,8 +1,6 @@
-name = "chat-app"
-type = "javascript"
-
 [build]
-command = "npm install npm install && echo 'window.BACKEND_URL = \"${PROD_BACKEND_URL}\"; window.FRONTEND_URL = \"${PROD_FRONTEND_URL}\"; window.ENV = \"production\";' > public/env-config.js && npm run build"
+  command = "npm install && echo 'window.BACKEND_URL = \"${PROD_BACKEND_URL}\"; window.FRONTEND_URL = \"${PROD_FRONTEND_URL}\"; window.ENV = \"production\";' > public/env-config.js && npm run build"
 
 [build.environment]
   APP_ENVIRONMENT = "production"
+  NODE_ENV="development"
