@@ -1,6 +1,11 @@
-const BACKEND_URL = window.BACKEND_URL;
-const FRONTEND_URL = window.FRONTEND_URL;
-const ENV = window.ENV;
+// const BACKEND_URL = window.BACKEND_URL;
+// const FRONTEND_URL = window.FRONTEND_URL;
+// const ENV = window.ENV;
+
+let BACKEND_URL = '';
+let FRONTEND_URL = '';
+let ENV = 'production';
+let socket;
 
 console.log(`Running in ${ENV} environment`);
 console.log("Backend URL chat js:", BACKEND_URL);
@@ -9,37 +14,142 @@ console.log("Backend URL chat js:", BACKEND_URL);
 //   transports: ['websocket', 'polling']
 // });
 
-let socket;
 
-// More robust socket initialization
-try {
-  // Ensure URL has proper format with protocol
-  let socketUrl = BACKEND_URL;
-  if (!socketUrl.startsWith('http://') && !socketUrl.startsWith('https://')) {
-    socketUrl = 'http://' + socketUrl;
+// // More robust socket initialization
+// try {
+//   // Ensure URL has proper format with protocol
+//   let socketUrl = BACKEND_URL;
+//   if (!socketUrl.startsWith('http://') && !socketUrl.startsWith('https://')) {
+//     socketUrl = 'http://' + socketUrl;
+//   }
+  
+//   socket = io(socketUrl, {
+//     transports: ['websocket', 'polling'],
+//     reconnectionAttempts: 5,
+//     reconnectionDelay: 1000,
+//     timeout: 20000
+//   });
+  
+//   socket.on('connect', () => {
+//     console.log('Connected to server');
+//   });
+  
+//   socket.on('connect_error', (error) => {
+//     console.error('Connection error:', error);
+//   });
+  
+//   socket.on('disconnect', (reason) => {
+//     console.log('Disconnected:', reason);
+//   });
+// } catch (error) {
+//   console.error('Socket initialization error:', error);
+// }
+
+async function initializeConfig() {
+  try {
+    // In development, use local values
+    if (window.location.hostname === 'localhost') {
+      BACKEND_URL = 'http://localhost:3000';
+      FRONTEND_URL = 'http://localhost:3000';
+      ENV = 'development';
+      console.log(`Running in init config ${ENV} environment`);
+      console.log("Backend URL:", BACKEND_URL);
+      initializeSocket();
+      return;
+    }
+    
+    // In production, fetch from Netlify function
+    const response = await fetch('/netlify/functions/api-config');
+    if (!response.ok) {
+      throw new Error(`Config fetch failed: ${response.status}`);
+    }
+    const config = await response.json();
+    
+    BACKEND_URL = config.backendUrl;
+    FRONTEND_URL = config.frontendUrl;
+    ENV = config.environment;
+    
+    console.log(`Running in 2 ${ENV} environment`);
+    console.log("Backend URL:", BACKEND_URL);
+    
+    initializeSocket();
+  } catch (error) {
+    console.error('Failed to initialize config:', error);
   }
-  
-  socket = io(socketUrl, {
-    transports: ['websocket', 'polling'],
-    reconnectionAttempts: 5,
-    reconnectionDelay: 1000,
-    timeout: 20000
-  });
-  
-  socket.on('connect', () => {
-    console.log('Connected to server');
-  });
-  
-  socket.on('connect_error', (error) => {
-    console.error('Connection error:', error);
-  });
-  
-  socket.on('disconnect', (reason) => {
-    console.log('Disconnected:', reason);
-  });
-} catch (error) {
-  console.error('Socket initialization error:', error);
 }
+
+function initializeSocket() {
+  try {
+    if (BACKEND_URL && typeof BACKEND_URL === 'string') {
+      // Ensure URL has proper protocol
+      let socketUrl = BACKEND_URL;
+      if (!socketUrl.startsWith('http://') && !socketUrl.startsWith('https://')) {
+        socketUrl = 'http://' + socketUrl;
+      }
+      
+      socket = io(socketUrl, {
+        transports: ['websocket', 'polling'],
+        reconnectionAttempts: 5,
+        reconnectionDelay: 1000,
+        timeout: 20000
+      });
+      
+      socket.on('connect', () => {
+        console.log('Connected to server');
+        setupSocketEvents();
+      });
+      
+      socket.on('connect_error', (error) => {
+        console.error('Connection error:', error);
+      });
+      
+      socket.on('disconnect', (reason) => {
+        console.log('Disconnected:', reason);
+      });
+    } else {
+      console.error('Invalid BACKEND_URL:', BACKEND_URL);
+    }
+  } catch (error) {
+    console.error('Socket initialization error:', error);
+  }
+}
+
+function setupSocketEvents() {
+  // Move all your socket event handlers here
+  socket.on("message", (message) => {
+    console.log(message);
+    const html = Mustache.render(messageTemplate, {
+      username: message.username,
+      message: message.text,
+      createdAt: moment(message.createdAt).format("h:mm a"),
+    });
+    $messages.insertAdjacentHTML("beforeend", html);
+    autoScroll();
+  });
+  
+  socket.on("locationMessage", (message) => {
+    console.log(message);
+    const html = Mustache.render(locationMessageTemplate, {
+      username: message.username,
+      url: message.url,
+      createdAt: moment(message.createdAt).format("h:mm a"),
+    });
+    $messages.insertAdjacentHTML("beforeend", html);
+    autoScroll();
+  });
+  
+  socket.on("roomData", ({ room, users }) => {
+    const html = Mustache.render(sidebarTemplate, {
+      room,
+      users,
+    });
+    document.querySelector("#sidebar").innerHTML = html;
+  });
+}
+
+// Initialize app
+initializeConfig();
+
 
 // Elements
 
@@ -151,6 +261,12 @@ $messageForm.addEventListener("submit", (e) => {
   $messageFormButtons.setAttribute("disabled", "disabled");
 
   const message = e.target.elements.message.value;
+
+  if (!socket) {
+    console.error("Socket not initialized");
+    $messageFormButtons.removeAttribute("disabled");
+    return;
+  }
 
   // last function is for event acknowledgement
   safeSocketEmit("sendMessage", message, (error) => {
