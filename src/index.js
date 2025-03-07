@@ -3,9 +3,9 @@ const http = require("http");
 const express = require("express");
 const socketio = require("socket.io");
 const Filter = require("bad-words");
-require('dotenv').config();
-const cors = require('cors')
-const hbs = require('hbs');
+require("dotenv").config();
+const cors = require("cors");
+const hbs = require("hbs");
 const {
   generateMessage,
   generateLocationMessage,
@@ -19,12 +19,12 @@ const {
 } = require("./utils/users");
 
 // dev or prod ?
-const isDevelopment = process.env.NODE_ENV !== 'production';
-const BACKEND_URL = isDevelopment 
-  ? process.env.LOCAL_BACKEND_URL 
+const isDevelopment = process.env.NODE_ENV !== "production";
+const BACKEND_URL = isDevelopment
+  ? process.env.LOCAL_BACKEND_URL
   : process.env.PROD_BACKEND_URL;
-const FRONTEND_URL = isDevelopment 
-  ? process.env.LOCAL_FRONTEND_URL 
+const FRONTEND_URL = isDevelopment
+  ? process.env.LOCAL_FRONTEND_URL
   : process.env.PROD_FRONTEND_URL;
 
 const app = express();
@@ -36,30 +36,27 @@ const publicDirectoryPath = path.join(__dirname, "../public");
 app.use(express.static(publicDirectoryPath));
 app.use(cors());
 
-
-
-const io = socketio(server,{
-  cors : {
+const io = socketio(server, {
+  cors: {
     origin: [
       process.env.LOCAL_FRONTEND_URL,
-      process.env.PROD_FRONTEND_URL
+      process.env.PROD_FRONTEND_URL,
     ].filter(Boolean),
-    methods: ["GET", "POST"]
-  }
+    methods: ["GET", "POST"],
+  },
 });
 
 const port = process.env.PORT || 3000;
 
-console.log("Environment:", isDevelopment ? 'Development' : 'Production');
+console.log("Environment:", isDevelopment ? "Development" : "Production");
 
-
-app.get('/env-config.js', (req, res) => {
+app.get("/env-config.js", (req, res) => {
   console.log("env config hit");
-  res.type('application/javascript');
+  res.type("application/javascript");
   res.send(`
     window.BACKEND_URL = "${BACKEND_URL}";
     window.FRONTEND_URL = "${FRONTEND_URL}";
-    window.ENV = "${isDevelopment ? 'development' : 'production'}";
+    window.ENV = "${isDevelopment ? "development" : "production"}";
   `);
   // res.send(`window.BACKEND_URL = "${BACKEND_URL}";`);
 });
