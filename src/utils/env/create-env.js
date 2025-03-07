@@ -8,7 +8,7 @@ const backendUrl = isDevelopment
   ? process.env.LOCAL_BACKEND_URL || "http://localhost:3000"
   : process.env.PROD_BACKEND_URL || "";
 const frontendUrl = isDevelopment
-  ? process.env.LOCAL_BACKEND_URL || "http://localhost:8080"
+  ? process.env.LOCAL_BACKEND_URL || "http://localhost:3000"
   : process.env.PROD_FRONTEND_URL || "";
 
 const envConfig = `
