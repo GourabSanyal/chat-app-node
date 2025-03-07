@@ -1,6 +1,7 @@
 [build]
   command = "npm install && npm run build"
   functions = "netlify/functions"
+  publish="dist"
   # \"npm install && echo 'window.BACKEND_URL = \"${PROD_BACKEND_URL}\"; window.FRONTEND_URL = \"${PROD_FRONTEND_URL}\"; window.ENV = \"production\";' > public/env-config.js && npm run build"
 
 [build.environment]
