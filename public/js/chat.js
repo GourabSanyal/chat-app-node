@@ -318,6 +318,19 @@ socket.emit("join", { username, room }, (error) => {
   }
 });
 
+// function joinRoom() {
+//   if (socket && username && room) {
+//     socket.emit("join", { username, room }, (error) => {
+//       if (error) {
+//         alert(error);
+//         location.href = "/";
+//       }
+//     });
+//   } else {
+//     console.error("Cannot join room - socket not initialized or missing username/room");
+//   }
+// }
+
 // socket.on("countUpdated", (count) => {
 //   console.log("Count has been updated ", count);
 // });
