@@ -5,8 +5,7 @@
 let BACKEND_URL = '';
 let FRONTEND_URL = '';
 let ENV = 'production';
-let socket = null;
-let socketInitialized = false;
+let socket;
 
 console.log(`Running in ${ENV} environment`);
 console.log("Backend URL chat js:", BACKEND_URL);
@@ -53,94 +52,66 @@ async function initializeConfig() {
       BACKEND_URL = 'http://localhost:3000';
       FRONTEND_URL = 'http://localhost:3000';
       ENV = 'development';
-      console.log(`Running in ${ENV} environment (initConfig)`);
+      console.log(`Running in init config ${ENV} environment`);
       console.log("Backend URL:", BACKEND_URL);
-      await initializeSocket();
+      initializeSocket();
       return;
     }
     
     // In production, fetch from Netlify function
-    console.log("Fetching config from Netlify function...");
-    try {
-      const response = await fetch('/.netlify/functions/api-config');
-      if (!response.ok) {
-        throw new Error(`Config fetch failed: ${response.status}`);
-      }
-      const config = await response.json();
-      
-      BACKEND_URL = config.backendUrl;
-      FRONTEND_URL = config.frontendUrl;
-      ENV = config.environment;
-      
-      console.log(`Running in ${ENV} environment (from function)`);
-      console.log("Backend URL:", BACKEND_URL);
-    } catch (functionError) {
-      console.error('Function fetch failed:', functionError);
-      console.log('Falling back to default values');
-      // Fallback values
-      BACKEND_URL = 'https://your-backend-url.render.com'; // Update with your Render URL
-      FRONTEND_URL = 'https://your-frontend-url.netlify.app';
-      ENV = 'production';
+    const response = await fetch('/netlify/functions/api-config');
+    if (!response.ok) {
+      throw new Error(`Config fetch failed: ${response.status}`);
     }
+    const config = await response.json();
     
-    await initializeSocket();
+    BACKEND_URL = config.backendUrl;
+    FRONTEND_URL = config.frontendUrl;
+    ENV = config.environment;
+    
+    console.log(`Running in 2 ${ENV} environment`);
+    console.log("Backend URL:", BACKEND_URL);
+    
+    initializeSocket();
   } catch (error) {
     console.error('Failed to initialize config:', error);
   }
 }
 
 function initializeSocket() {
-  return new Promise((resolve, reject) => {
-    try {
-      if (BACKEND_URL && typeof BACKEND_URL === 'string') {
-        // Ensure URL has proper protocol
-        let socketUrl = BACKEND_URL;
-        if (!socketUrl.startsWith('http://') && !socketUrl.startsWith('https://')) {
-          socketUrl = 'http://' + socketUrl;
-        }
-        
-        console.log("Initializing socket with URL:", socketUrl);
-        socket = io(socketUrl, {
-          transports: ['websocket', 'polling'],
-          reconnectionAttempts: 5,
-          reconnectionDelay: 1000,
-          timeout: 20000
-        });
-        
-        socket.on('connect', () => {
-          console.log('Connected to server');
-          socketInitialized = true;
-          setupSocketEvents();
-          // joinRoom();
-          resolve();
-        });
-        
-        socket.on('connect_error', (error) => {
-          console.error('Connection error:', error);
-          reject(error);
-        });
-        
-        socket.on('disconnect', (reason) => {
-          console.log('Disconnected:', reason);
-          socketInitialized = false;
-        });
-
-        // Set a timeout for connection
-        setTimeout(() => {
-          if (!socketInitialized) {
-            console.error('Socket connection timeout');
-            reject(new Error('Socket connection timeout'));
-          }
-        }, 10000);
-      } else {
-        console.error('Invalid BACKEND_URL:', BACKEND_URL);
-        reject(new Error('Invalid BACKEND_URL'));
+  try {
+    if (BACKEND_URL && typeof BACKEND_URL === 'string') {
+      // Ensure URL has proper protocol
+      let socketUrl = BACKEND_URL;
+      if (!socketUrl.startsWith('http://') && !socketUrl.startsWith('https://')) {
+        socketUrl = 'http://' + socketUrl;
       }
-    } catch (error) {
-      console.error('Socket initialization error:', error);
-      reject(error);
+      
+      socket = io(socketUrl, {
+        transports: ['websocket', 'polling'],
+        reconnectionAttempts: 5,
+        reconnectionDelay: 1000,
+        timeout: 20000
+      });
+      
+      socket.on('connect', () => {
+        console.log('Connected to server');
+        setupSocketEvents();
+      });
+      
+      socket.on('connect_error', (error) => {
+        console.error('Connection error:', error);
+      });
+      
+      socket.on('disconnect', (reason) => {
+        console.log('Disconnected:', reason);
+      });
+    } else {
+      console.error('Invalid BACKEND_URL:', BACKEND_URL);
     }
-  });
+  } catch (error) {
+    console.error('Socket initialization error:', error);
+  }
 }
 
 function setupSocketEvents() {
