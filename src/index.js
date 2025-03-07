@@ -18,6 +18,16 @@ const {
   getUsersInRoom,
 } = require("./utils/users");
 
+console.log("Testing direct connection to backend");
+const testUrl = 'https://chat-app-node-nnu3.onrender.com'; // Your actual Render URL
+fetch(testUrl)
+  .then(response => {
+    console.log("Direct connection response:", response.status);
+  })
+  .catch(error => {
+    console.error("Direct connection failed:", error);
+  });
+
 // dev or prod ?
 const isDevelopment = process.env.NODE_ENV !== "production";
 const BACKEND_URL = isDevelopment
@@ -41,6 +51,7 @@ const io = socketio(server, {
     origin: [
       process.env.LOCAL_FRONTEND_URL,
       process.env.PROD_FRONTEND_URL,
+      'https://silver-capybara-08806a.netlify.app'
     ].filter(Boolean),
     methods: ["GET", "POST"],
   },
