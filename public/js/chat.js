@@ -136,18 +136,24 @@ if (socket) {
   console.error("Socket not initialized, cannot set up event handlers");
 }
 
+function safeSocketEmit(event, ...args) {
+  if (socket) {
+    return socket.emit(event, ...args);
+  }
+  console.error(`Cannot emit ${event} - socket not initialized`);
+  return false;
+}
+
 $messageForm.addEventListener("submit", (e) => {
   e.preventDefault();
 
   // --- disable the form ---
-
   $messageFormButtons.setAttribute("disabled", "disabled");
 
   const message = e.target.elements.message.value;
-  // also can be done by "document.querySelector("input").value;"
 
   // last function is for event acknowledgement
-  socket.emit("sendMessage", message, (error) => {
+  safeSocketEmit("sendMessage", message, (error) => {
     // --- enable the form ---
     $messageFormButtons.removeAttribute("disabled");
     $messageFormInput.value = "";
@@ -159,7 +165,7 @@ $messageForm.addEventListener("submit", (e) => {
     console.log("message delivered - client");
   });
 
-  socket.emit("locationMessage", (url) => {});
+  safeSocketEmit("locationMessage", (url) => {});
 });
 
 $sendLocationButton.addEventListener("click", (e) => {
