@@ -1,21 +1,45 @@
-// const BACKEND_URL = window.BACKEND_URL;
-// const FRONTEND_URL = window.FRONTEND_URL;
-
 const BACKEND_URL = window.BACKEND_URL;
 const FRONTEND_URL = window.FRONTEND_URL;
 const ENV = window.ENV;
 
 console.log(`Running in ${ENV} environment`);
-// console.log("Backend URL:", BACKEND_URL);
-// console.log("Frontend URL:", FRONTEND_URL);
+console.log("Backend URL chat js:", BACKEND_URL);
 
-// console.log("BACKEND_URL from chat js:", BACKEND_URL); // Check if this is undefined
-// console.log("FRONTEND_URL fromm index js:", FRONTEND_URL);
+// const socket = io(`${BACKEND_URL}`,{
+//   transports: ['websocket', 'polling']
+// });
 
-const socket = io(`${BACKEND_URL}`,{
-  transports: ['websocket', 'polling']
-});
-// const Mustache = Mustache();
+let socket;
+
+// More robust socket initialization
+try {
+  // Ensure URL has proper format with protocol
+  let socketUrl = BACKEND_URL;
+  if (!socketUrl.startsWith('http://') && !socketUrl.startsWith('https://')) {
+    socketUrl = 'http://' + socketUrl;
+  }
+  
+  socket = io(socketUrl, {
+    transports: ['websocket', 'polling'],
+    reconnectionAttempts: 5,
+    reconnectionDelay: 1000,
+    timeout: 20000
+  });
+  
+  socket.on('connect', () => {
+    console.log('Connected to server');
+  });
+  
+  socket.on('connect_error', (error) => {
+    console.error('Connection error:', error);
+  });
+  
+  socket.on('disconnect', (reason) => {
+    console.log('Disconnected:', reason);
+  });
+} catch (error) {
+  console.error('Socket initialization error:', error);
+}
 
 // Elements
 
@@ -70,36 +94,47 @@ const autoScroll = () => {
   }
 };
 
-socket.on("message", (message) => {
-  console.log(message);
-
-  const html = Mustache.render(messageTemplate, {
-    username: message.username,
-    message: message.text,
-    createdAt: moment(message.createdAt).format("h:mm a"),
+if (socket) {
+  socket.on("message", (message) => {
+    console.log(message);
+    const html = Mustache.render(messageTemplate, {
+      username: message.username,
+      message: message.text,
+      createdAt: moment(message.createdAt).format("h:mm a"),
+    });
+    $messages.insertAdjacentHTML("beforeend", html);
+    autoScroll();
   });
-  $messages.insertAdjacentHTML("beforeend", html);
-  autoScroll();
-});
+} else {
+  console.error("Socket not initialized, cannot set up event handlers");
+}
 
-socket.on("locationMessage", (message) => {
-  console.log(message);
-  const html = Mustache.render(locationMessageTemplate, {
-    username: message.username,
-    url: message.url,
-    createdAt: moment(message.createdAt).format("h:mm a"),
+if (socket) {
+  socket.on("locationMessage", (message) => {
+    console.log(message);
+    const html = Mustache.render(locationMessageTemplate, {
+      username: message.username,
+      url: message.url,
+      createdAt: moment(message.createdAt).format("h:mm a"),
+    });
+    $messages.insertAdjacentHTML("beforeend", html);
+    autoScroll();
   });
-  $messages.insertAdjacentHTML("beforeend", html);
-  autoScroll();
-});
+} else {
+  console.error("Socket not initialized, cannot set up event handlers");
+}
 
-socket.on("roomData", ({ room, users }) => {
-  const html = Mustache.render(sidebarTemplate, {
-    room,
-    users,
+if (socket) {
+  socket.on("roomData", ({ room, users }) => {
+    const html = Mustache.render(sidebarTemplate, {
+      room,
+      users,
+    });
+    document.querySelector("#sidebar").innerHTML = html;
   });
-  document.querySelector("#sidebar").innerHTML = html;
-});
+} else {
+  console.error("Socket not initialized, cannot set up event handlers");
+}
 
 $messageForm.addEventListener("submit", (e) => {
   e.preventDefault();
